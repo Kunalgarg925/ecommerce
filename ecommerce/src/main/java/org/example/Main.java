@@ -1,9 +1,9 @@
 package org.example;
 
 import org.example.model.*;
-import org.example.service.CustomerManagement;
+import org.example.service.CustomerRepository;
 import org.example.service.OrderService;
-import org.example.service.ProductManagement;
+import org.example.service.ProductRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,38 +12,43 @@ import java.util.List;
 // then press Enter. You can now see whitespace characters in your code.
 public class Main {
     public static void main(String[] args) throws Exception {
-        ProductManagement productManagement = new ProductManagement();
+        //rename this class to a better name, like ProductRepository.
+        ProductRepository productRepository = new ProductRepository();
+
         List<Product> productList = getProductList();
         Catalogue mensCatalogue = new Catalogue("Mens",productList);
         Catalogue femaleCatalogue = new Catalogue("Female",productList);
-        productManagement.addCatalogue(mensCatalogue);
-        productManagement.addCatalogue(femaleCatalogue);
+        productRepository.addCatalogue(mensCatalogue);
+        productRepository.addCatalogue(femaleCatalogue);
 
-        CustomerManagement customerHandler = new CustomerManagement();
+        // rename this to CustomerRepository
+        CustomerRepository customerRepository = new CustomerRepository();
 
-        Customer kunal = new Customer();
-        kunal.setName("Kunal");
-        kunal.setCreditCard(new CreditCard(9876543214528521L,744));
-        kunal.setEmailId("kunalgarg925@gmail.com");
-        kunal.setPhoneNumber(9416287031L);
+        Customer kunalInput = new Customer();
+        kunalInput.setName("Kunal");
+        kunalInput.setCreditCard(new CreditCard(9876543214528521L,744));
+        kunalInput.setEmailId("kunalgarg925@gmail.com");
+        kunalInput.setPhoneNumber(9416287031L);
 
-        Customer tushar = new Customer();
-        tushar.setName("Tushar");
-        tushar.setCreditCard(new CreditCard(963288741256325L,325));
-        tushar.setEmailId("willingTushar@gmail.com");
-        tushar.setPhoneNumber(9872563142L);
-        Customer customerDetail = customerHandler.createCustomer(tushar);
+        Customer tusharInput = new Customer();
+        tusharInput.setName("Tushar");
+        tusharInput.setCreditCard(new CreditCard(963288741256325L,325));
+        tusharInput.setEmailId("willingTushar@gmail.com");
+        tusharInput.setPhoneNumber(9872563142L);
 
-        System.out.println(customerHandler.createCustomer(kunal));
-//        System.out.println(customerHandler.getCustomerDetail("e7087e42-67ac-4061-8419-a3d9e4fb4f1d"));
-        System.out.println(customerHandler.getCustomerDetail(customerDetail.getId()));
+        Customer tushar = customerRepository.createCustomer(tusharInput);
+        Customer kunal = customerRepository.createCustomer(kunalInput);
+
+        System.out.println(kunal);
+//        System.out.println(customerRepository.getCustomerDetail("e7087e42-67ac-4061-8419-a3d9e4fb4f1d"));
+        System.out.println(customerRepository.getCustomerDetail(tushar.getId()));
 
         // handling order
 
-        OrderService orderHandler = new OrderService(productManagement);
-        orderHandler.takeOrder(kunal.getId());
-        System.out.println(" Total Cost Of Order -----> " + orderHandler.getTotalCost(kunal.getId()));
-        System.out.println(" Order Details :- " + orderHandler.getOrderDetail(kunal.getId()));
+        OrderService orderService = new OrderService(productRepository);
+        orderService.takeOrder(kunalInput.getId());
+        System.out.println(" Total Cost Of Order -----> " + orderService.getTotalCost(kunalInput.getId()));
+        System.out.println(" Order Details :- " + orderService.getOrderDetail(kunalInput.getId()));
     }
 
     private static List<Product> getProductList() {

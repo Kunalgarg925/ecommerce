@@ -13,7 +13,18 @@ public class ShoppingCart {
     private float totalAmount = 0;
 
     public void addProduct(CartLineItem cartItem){
-        this.itemsList.add(cartItem);
+        for(CartLineItem iterateItem : this.itemsList){
+            String productName = iterateItem.getProductDetail().getProductName();
+            if(cartItem.getProductDetail().getProductName().equalsIgnoreCase(productName)){
+                int quantity = iterateItem.getQuantity();
+                int newItemQuantity = cartItem.getQuantity();
+                cartItem.setQuantity(quantity + newItemQuantity);
+                this.totalQuantity -= quantity;
+                this.totalAmount -= iterateItem.getProductDetail().getProductPrice() * quantity;
+                this.itemsList.remove(iterateItem);
+                break;
+            }
+        }
         this.itemsList.add(cartItem);
         this.totalQuantity += cartItem.getQuantity();
         this.totalAmount += cartItem.getProductDetail().getProductPrice() * cartItem.getQuantity();
@@ -24,18 +35,18 @@ public class ShoppingCart {
             Integer index = this.itemsList.indexOf(cartItem);
             if(cartItem.getQuantity() > quantity){
                 cartItem.setQuantity(cartItem.getQuantity() - quantity);
-                this.totalQuantity -= quantity;
-                this.totalAmount -= quantity * cartItem.getProductDetail().getProductPrice();
-                this.itemsList.add(index,cartItem);
-            }else if(cartItem.getQuantity()  == quantity){
+                this.itemsList.set(index,cartItem);
+            }else if(cartItem.getQuantity().equals(quantity)){
                 this.itemsList.remove(cartItem);
-                this.totalQuantity -= quantity;
-                this.totalAmount -= quantity * cartItem.getProductDetail().getProductPrice();
             }else{
                 throw new Exception("removed quanity is too high");
             }
+            this.totalQuantity -= quantity;
+            this.totalAmount -= quantity * cartItem.getProductDetail().getProductPrice();
+        }else{
+            System.out.println("Item is not found please enter right product name");
         }
-        this.totalAmount -= cartItem.getQuantity() * cartItem.getProductDetail().getProductPrice();
+
     }
 
     @Override

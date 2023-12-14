@@ -7,9 +7,9 @@ import org.example.model.Product;
 import java.util.List;
 import java.util.UUID;
 
-public class ProductManagement {
+public class ProductRepository {
     private ProductDatabase productDatabase;
-    public ProductManagement(){
+    public ProductRepository(){
         this.productDatabase = new ProductDatabase();
     }
 

@@ -1,8 +1,10 @@
 package org.example.service;
 
+import lombok.var;
 import org.example.adapter.ShoppingCartDatabase;
 import org.example.model.CartLineItem;
 import org.example.model.Catalogue;
+import org.example.model.Product;
 import org.example.model.ShoppingCart;
 
 import java.util.ArrayList;
@@ -12,38 +14,56 @@ import java.util.Scanner;
 public class OrderService {
 
     private final ShoppingCartDatabase shoppingCartdatabase;
-    private final ProductManagement productManagement;
-    public OrderService(ProductManagement productManagement){
+    private final ProductRepository productRepository;
+    public OrderService(ProductRepository productRepository){
         this.shoppingCartdatabase = new ShoppingCartDatabase();
-        this.productManagement = productManagement;
+        this.productRepository = productRepository;
     }
     public void takeOrder(String customerId) throws Exception {
-        ShoppingCart myCart = new ShoppingCart();
-        if(shoppingCartdatabase.getShoppingCart(customerId) != null){
-            myCart = shoppingCartdatabase.getShoppingCart(customerId);
-        }else{
-            myCart.setCustomerId(customerId);
-        }
-        System.out.println(" ======== Cart Item List ========== ");
-        if(myCart.getItemsList() != null){
-            System.out.println(myCart.getItemsList());
-        }else{
-            System.out.println("No item in your cart");
-        }
-        Integer chooseOptionNumber = showOptions();
-        while(chooseOptionNumber < 3){
-            if(chooseOptionNumber == 1){
-                String catalogueName = chooseCatalogueName();
-                myCart = addProduct(catalogueName,myCart);
-            } else if (chooseOptionNumber == 2) {
-                myCart = removeProduct(myCart);
-            }
-            chooseOptionNumber = showOptions();
-        }
-        if(chooseOptionNumber == 3){
-            shoppingCartdatabase.addShoppingCart(customerId,myCart);
+        // 1. take order
+        // 2. update cart
+
+        ShoppingCart cart = shoppingCartdatabase.getShoppingCart(customerId);
+        if (cart == null) {
+            cart = createCart(customerId);
         }
 
+
+//        ShoppingCart myCart = new ShoppingCart();
+//        if(shoppingCartdatabase.getShoppingCart(customerId) != null){
+//            myCart = shoppingCartdatabase.getShoppingCart(customerId);
+//        }else{
+//            myCart.setCustomerId(customerId);
+//        }
+
+//        System.out.println(" ======== Cart Item List ========== ");
+//        if(myCart.getItemsList() != null){
+//            System.out.println(myCart.getItemsList());
+//        }else{
+//            System.out.println("No item in your cart");
+//        }
+
+        // you can replace customer action with an enum as the number of actions are predefined.
+        int customerAction = takeCustomerAction();
+        while(customerAction != 3) {
+            if(customerAction == 1) {
+                String catalogueName = chooseCatalogueName();
+                addProduct(catalogueName,cart);
+            } else if (customerAction == 2) {
+                removeProduct(cart);
+            }
+            customerAction = takeCustomerAction();
+        }
+
+        shoppingCartdatabase.addShoppingCart(customerId, cart);
+    }
+
+    private ShoppingCart createCart(String customerId) {
+        ShoppingCart newCart =  new ShoppingCart();
+        newCart.setCustomerId(customerId);
+
+        shoppingCartdatabase.addShoppingCart(newCart);
+        return newCart;
     }
 
     public float getTotalCost(String customerId){
@@ -60,79 +80,92 @@ public class OrderService {
         return null;
     }
 
-    private ShoppingCart removeProduct(ShoppingCart myCart) throws Exception {
+    private void removeProduct(ShoppingCart myCart) throws Exception {
         System.out.println(" ====== Cart Item List ====== ");
         List<CartLineItem> cartItems = myCart.getItemsList();
         System.out.println(cartItems);
-        Scanner scan = new Scanner(System.in);
+
         System.out.println("Choose product for remove");
+
         String removeMoreItem = "yes";
-        while(!removeMoreItem.equals("no")){
+        while(removeMoreItem.equals("yes")){
+            Scanner scan = new Scanner(System.in);
             System.out.print("Enter Product Name : ");
             String productName = scan.nextLine();
+
             for(CartLineItem iterateCartLineItem : cartItems){
-                if(iterateCartLineItem.getProductDetail().getProductName().toLowerCase().equals(productName)){
+                if(iterateCartLineItem.getProductDetail().getProductName().equalsIgnoreCase(productName.trim())){
                     System.out.print("Enter Quantity : ");
-                    Integer quantity = scan.nextInt();
+                    int quantity = scan.nextInt();
                     if(quantity <= 0){
                         quantity = 1;
                     }
                     myCart.removeProduct(iterateCartLineItem,quantity);
+                    break;
                 }
             }
-            System.out.print("Do you want to buy more items (yes/no) : ");
-            removeMoreItem = scan.nextLine().toLowerCase();
+            System.out.print("Do you want to remove more items (yes/no) : ");
+            removeMoreItem = scan.next().trim().toLowerCase();
         }
-        return myCart;
     }
 
-    private ShoppingCart addProduct(String catalogueName,ShoppingCart myCart) throws Exception {
-        Scanner scan = new Scanner(System.in);
-        System.out.println(productManagement.getProductListOfCatalogue(catalogueName));
+    private void addProduct(String catalogueName, ShoppingCart cart) throws Exception {
+        // 1. show all products under the given catalogue
+        // 2. take customer input
+        // 3. update cart
+
+        List<Product> products = productRepository.getProductListOfCatalogue(catalogueName);
+        presentProductsToCustomer(products);
+
         System.out.println("Choose product from the above product list ");
+
         String addMoreItem = "yes";
-        System.out.println("bhar hu");
-        while(!addMoreItem.equals("no")){
-            System.out.println("andar hu");
+        while(addMoreItem.equals("yes")){
+            Scanner scan = new Scanner(System.in);
+
             System.out.print("Enter Product Name : ");
-            String productName = scan.nextLine();
-            if(productManagement.getProduct(catalogueName,productName).getProductName().toLowerCase().equals(productName.toLowerCase())){
+            String productName = scan.nextLine().trim().toLowerCase();
+
+            var product = productRepository.getProduct(catalogueName,productName);
+            if(product != null){
                 System.out.print("Enter Quantity : ");
-                Integer quantity = scan.nextInt();
+                int quantity = scan.nextInt();
                 if(quantity <= 0){
                     quantity = 1;
                 }
-                CartLineItem cartItem = new CartLineItem(productManagement.getProduct(catalogueName,productName),quantity);
-                myCart.addProduct(cartItem);
+
+                CartLineItem cartItem = new CartLineItem(product,quantity);
+                cart.addProduct(cartItem);
             }
-            System.out.println("Do you want to buy more items (yes/no) : ");
-            addMoreItem = scan.next();
-            System.out.println("add more item --- value ---" + addMoreItem);
+
+            System.out.println("Do you want to buy more products (yes/no) : ");
+            addMoreItem = scan.next().trim().toLowerCase();
         }
-        System.out.println("loop end");
-        return myCart;
+    }
+
+    private void presentProductsToCustomer(List<Product> products) {
+        // might wanna show only product names
+        System.out.println(products);
     }
 
 
     private String chooseCatalogueName() throws Exception {
         List<String> catalogueNames = new ArrayList<>();
-        for(Catalogue iterateCatalogue : productManagement.getCatalogueList()){
+        for(Catalogue iterateCatalogue : productRepository.getCatalogueList()){
             catalogueNames.add(iterateCatalogue.getCatalogueName());
         }
         System.out.println(catalogueNames);
         System.out.println("Choose gender from the above catalogues :");
         Scanner scan = new Scanner(System.in);
-        String catalogueName = scan.nextLine();
-        return catalogueName;
+        return scan.nextLine();
     }
 
-    private Integer showOptions(){
+    private Integer takeCustomerAction(){
         Scanner scan = new Scanner(System.in);
         System.out.println(" ===== Choose Number ======");
         System.out.println(" ===== 1. Add Item ====== ");
         System.out.println(" ===== 2. Remove Item ====== ");
         System.out.println(" ===== 3. Submit ====== ");
-        Integer chooseOptionNumber = scan.nextInt();
-        return chooseOptionNumber;
+        return scan.nextInt();
     }
 }

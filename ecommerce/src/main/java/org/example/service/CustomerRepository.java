@@ -8,11 +8,11 @@ import org.example.adapter.CustomerDatabase;
 import org.example.model.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CustomerManagement {
+public class CustomerRepository {
 
     @Autowired
     private CustomerDatabase customerDatabase;
-    public CustomerManagement(){
+    public CustomerRepository(){
         this.customerDatabase = new CustomerDatabase();
     }
     public Customer createCustomer(Customer customerDetails){

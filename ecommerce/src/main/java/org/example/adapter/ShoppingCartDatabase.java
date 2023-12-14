@@ -1,6 +1,7 @@
 package org.example.adapter;
 
 import org.example.model.ShoppingCart;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,15 @@ public class ShoppingCartDatabase {
 
     // Add a shopping cart to the database
     public void addShoppingCart(String customerId, ShoppingCart shoppingCart) {
+        shoppingCartList.put(customerId, shoppingCart);
+    }
+
+    public void addShoppingCart(ShoppingCart shoppingCart) {
+        String customerId = shoppingCart.getCustomerId();
+        if(StringUtils.isEmpty(customerId)) {
+            throw new RuntimeException("CustomerId can't be null for Shopping cart.");
+        }
+
         shoppingCartList.put(customerId, shoppingCart);
     }
 
