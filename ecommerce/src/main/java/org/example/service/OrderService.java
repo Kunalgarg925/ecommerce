@@ -1,23 +1,25 @@
 package org.example.service;
 
 import lombok.var;
+import org.example.adapter.OrderDatabase;
 import org.example.adapter.ShoppingCartDatabase;
-import org.example.model.CartLineItem;
-import org.example.model.Catalogue;
-import org.example.model.Product;
-import org.example.model.ShoppingCart;
+import org.example.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 public class OrderService {
 
     private final ShoppingCartDatabase shoppingCartdatabase;
+
+    private final OrderDatabase orderDatabase;
     private final ProductRepository productRepository;
     public OrderService(ProductRepository productRepository){
         this.shoppingCartdatabase = new ShoppingCartDatabase();
         this.productRepository = productRepository;
+        this.orderDatabase = new OrderDatabase();
     }
     public void takeOrder(String customerId) throws Exception {
         // 1. take order
@@ -27,22 +29,6 @@ public class OrderService {
         if (cart == null) {
             cart = createCart(customerId);
         }
-
-
-//        ShoppingCart myCart = new ShoppingCart();
-//        if(shoppingCartdatabase.getShoppingCart(customerId) != null){
-//            myCart = shoppingCartdatabase.getShoppingCart(customerId);
-//        }else{
-//            myCart.setCustomerId(customerId);
-//        }
-
-//        System.out.println(" ======== Cart Item List ========== ");
-//        if(myCart.getItemsList() != null){
-//            System.out.println(myCart.getItemsList());
-//        }else{
-//            System.out.println("No item in your cart");
-//        }
-
         // you can replace customer action with an enum as the number of actions are predefined.
         int customerAction = takeCustomerAction();
         while(customerAction != 3) {
@@ -65,6 +51,14 @@ public class OrderService {
         shoppingCartdatabase.addShoppingCart(newCart);
         return newCart;
     }
+    public void deleteCart(String customerId) {
+        if(customerId != null){
+            shoppingCartdatabase.removeShoppingCart(customerId);
+        }
+        else{
+            throw new RuntimeException("Please enter customerId");
+        }
+    }
 
     public float getTotalCost(String customerId){
         if(customerId != null){
@@ -76,6 +70,12 @@ public class OrderService {
     public ShoppingCart getOrderDetail(String customerId){
         if(customerId != null){
             return shoppingCartdatabase.getShoppingCart(customerId);
+        }
+        return null;
+    }
+    public Order getOrderDetails(String customerId, String orderId){
+        if(customerId != null && orderId != null){
+            return orderDatabase.getOrderDetails(customerId,orderId);
         }
         return null;
     }
@@ -168,4 +168,33 @@ public class OrderService {
         System.out.println(" ===== 3. Submit ====== ");
         return scan.nextInt();
     }
+
+    public String createOrder(Customer customer) {
+        if(customer != null){
+            ShoppingCart cart = shoppingCartdatabase.getShoppingCart(customer.getId());
+            Order newOrder = new Order();
+            newOrder.setCustomerDetails(customer);
+            newOrder.setItemsList(cart.getItemsList());
+            newOrder.setTotalQuantity(cart.getTotalQuantity());
+            newOrder.setTotalAmount(cart.getTotalAmount());
+            newOrder.setOrderId(UUID.randomUUID().toString());
+            orderDatabase.createOrder(customer.getId(),newOrder);
+            return newOrder.getOrderId();
+        }else{
+            throw new RuntimeException("Please enter a customer");
+        }
+
+    }
+
+    public Boolean confirmOrder(String customerId) {
+        ShoppingCart cart = shoppingCartdatabase.getShoppingCart(customerId);
+        System.out.println("Your cart items :- " + cart);
+        System.out.print("Do you want to place an order (true/false) : ");
+        Scanner scn = new Scanner(System.in);
+        Boolean confirmation = scn.nextBoolean();
+        System.out.println("confirmation : " + confirmation);
+        return confirmation;
+    }
+
+
 }

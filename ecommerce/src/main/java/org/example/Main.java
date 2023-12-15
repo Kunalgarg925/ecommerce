@@ -1,5 +1,6 @@
 package org.example;
 
+import org.example.adapter.OrderDatabase;
 import org.example.model.*;
 import org.example.service.CustomerRepository;
 import org.example.service.OrderService;
@@ -7,6 +8,7 @@ import org.example.service.ProductRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 // Press Shift twice to open the Search Everywhere dialog and type `show whitespaces`,
 // then press Enter. You can now see whitespace characters in your code.
@@ -47,8 +49,29 @@ public class Main {
 
         OrderService orderService = new OrderService(productRepository);
         orderService.takeOrder(kunalInput.getId());
-        System.out.println(" Total Cost Of Order -----> " + orderService.getTotalCost(kunalInput.getId()));
-        System.out.println(" Order Details :- " + orderService.getOrderDetail(kunalInput.getId()));
+        Boolean confirmOrder = orderService.confirmOrder(kunalInput.getId());
+        System.out.println("confirm order : " + confirmOrder);
+        if(confirmOrder){
+            System.out.println("true");
+            String orderId = orderService.createOrder(kunal);
+            orderService.deleteCart(kunalInput.getId());
+            System.out.println("Order Details :- " + orderService.getOrderDetails(kunalInput.getId(),orderId));
+        }else{
+            System.out.println("false");
+            System.out.println("Do you want add/remove items (true,false)?");
+            Scanner scan = new Scanner(System.in);
+            Boolean changesInOrder = scan.hasNext();
+            if(changesInOrder){
+                orderService.takeOrder(kunalInput.getId());
+                String orderId = orderService.createOrder(kunal);
+                orderService.deleteCart(kunalInput.getId());
+                System.out.println("Order Details :- " + orderService.getOrderDetails(kunalInput.getId(),orderId));
+            }else{
+                System.out.println("No Order Placed");
+            }
+        }
+//        System.out.println(" Total Cost Of Order -----> " + orderService.(kunalInput.getId()));
+//        System.out.println(" Order Details :- " + orderService.getOrderDetail(kunalInput.getId()));
     }
 
     private static List<Product> getProductList() {
